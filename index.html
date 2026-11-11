@@ -58,6 +58,7 @@ const stars = Array.from({ length: 120 }, () => ({
 }));
 
 let count = 0, playing = false, angle = 0, lastAdd = 0, last = performance.now();
+let animationElapsed = 0;
 let audioCtx = null, musicTimer = null, musicStep = 0;
 
 function playMusicNote(frequency, startAt, duration, volume, type = "sine") {
@@ -118,12 +119,14 @@ function stopMusic() {
 function togglePlay() {
   playing = !playing;
   if (playing) {
-    window._t0 = performance.now();
     startMusic();
+    if (count >= TOTAL) {
+      count = 0;
+      animationElapsed = 0;
+    }
   } else {
     stopMusic();
   }
-  if (playing && count >= TOTAL) count = 0;
 }
 
 canvas.addEventListener("click", (e) => {
@@ -136,6 +139,7 @@ canvas.addEventListener("click", (e) => {
 function draw(now) {
   const dt = now - last; last = now;
   if (playing) {
+    animationElapsed += dt;
     angle += dt * SPIN;
     if (now - lastAdd > ADD_EVERY && count < TOTAL) { count++; lastAdd = now; }
     if (count >= TOTAL) {
@@ -211,15 +215,15 @@ function draw(now) {
   ctx.lineWidth = 1.5 * unit;
   ctx.beginPath(); ctx.arc(0, 0, (62 + pulse * 4) * unit, 0, Math.PI * 2); ctx.stroke();
 
-  // Show M, I, and M for equal 4-second intervals, repeating in sequence.
+  // Show M, I, and M exactly once, each for one third of the animation's total duration.
   {
-    const el = window._t0 === undefined ? -1 : now - window._t0;
-    const letters = ["M", "I", "M"];
-    const letterIndex = el < 0 ? -1 : Math.floor(el / 4000) % letters.length;
-    const letter = letterIndex < 0 ? null : letters[letterIndex];
-    const letterStart = letterIndex < 0 ? 0 : letterIndex * 4000;
-    const fade = letterIndex < 0 ? 0 : Math.min(1, (el - letterStart) / 500);
-    const prog = el < 0 ? 0 : Math.min(1, ((el % 6000) / 3000));
+    const sequenceDuration = TOTAL * ADD_EVERY;
+    const letterDuration = sequenceDuration / 3;
+    const letterIndex = Math.min(2, Math.floor(animationElapsed / letterDuration));
+    const letter = animationElapsed === 0 && !playing ? null : ["M", "I", "M"][letterIndex];
+    const letterStart = letterIndex * letterDuration;
+    const fade = letter ? Math.min(1, (animationElapsed - letterStart) / 500) : 0;
+    const prog = Math.min(1, ((animationElapsed % 6000) / 3000));
     const steps = Math.max(2, Math.floor(120 * prog));
     const heartScale = 3.1 * unit;
     ctx.lineCap = "round";
