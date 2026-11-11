@@ -1,325 +1,277 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>100 Ways to Say Sorry</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg1: #090612;
-      --bg2: #1a0d21;
-      --bg3: #3d1d3c;
-      --pink: #ff7bb8;
-      --gold: #f4d07a;
-      --white: #f7f1ff;
-      --lav: #d9c7ff;
-      --soft: rgba(255, 180, 220, 0.18);
-    }
-
-    * { box-sizing: border-box; }
-
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: radial-gradient(circle at center, var(--bg3) 0%, var(--bg2) 35%, var(--bg1) 100%);
-      font-family: "Cormorant Garamond", serif;
-      color: var(--white);
-    }
-
-    body {
-      display: grid;
-      place-items: center;
-    }
-
-    canvas {
-      width: min(100vw, 100vh);
-      height: min(100vw, 100vh);
-      display: block;
-      filter: drop-shadow(0 0 30px rgba(255, 138, 196, 0.22));
-      cursor: pointer;
-    }
-
-    .hint {
-      position: fixed;
-      left: 50%;
-      bottom: 18px;
-      transform: translateX(-50%);
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255,255,255,0.12);
-      color: rgba(255,255,255,0.7);
-      padding: 8px 14px;
-      border-radius: 999px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      font-size: 11px;
-      font-family: "Playfair Display", serif;
-      backdrop-filter: blur(6px);
-      pointer-events: none;
-      user-select: none;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>100 Ways to Say Sorry</title>
+<style>
+  :root { box-sizing: border-box; color-scheme: dark; }
+  html, body { margin: 0; height: 100%; background: linear-gradient(#050614, #2a1632); overflow: hidden; font-family: system-ui, sans-serif; }
+  body { display: flex; align-items: center; justify-content: center; }
+  canvas { width: min(100vw, 100vh); height: min(100vw, 100vh); display: block; }
+</style>
 </head>
 <body>
-  <canvas id="c" aria-label="Animated spiral of apology messages with romantic music"></canvas>
-  <div class="hint">Tap to play music</div>
+<canvas id="c" aria-label="Animated spiral of loving apology messages. Click the center to play or pause, with romantic instrumental music."></canvas>
+<script>
+// Edit these to say YOUR words. Each one is added to the spiral, one at a time.
+const PHRASES = [
+  "My sweet girl, I love you and I'm sorry", "I love you", "I'm sorry, my love", "You are my everything", "I'm sorry I hurt you",
+  "I never want to lose you", "Forgive me, I love you", "You mean the world to me",
+  "I'm sorry I made you cry", "Every day I choose you", "I was wrong, and I love you",
+  "I'm sorry I didn't listen", "You are my home", "I miss you every moment",
+  "I'm sorry for my bad words", "My heart is always yours", "Let me make it right",
+  "I'm sorry I was selfish", "You are my favorite person", "I can't imagine life without you",
+  "I'm sorry, I'm learning", "You make me better", "I'll do better for us",
+  "I love the way you smile", "I'm sorry I was distant", "Thank you for loving me",
+  "You are my peace", "I'm sorry I let you down", "I'll always choose you",
+  "I'm sorry for the pain I caused", "You are my best friend", "I love you more than words",
+  "I'm sorry I forgot something important", "Please forgive me, my love", "You are my forever",
+  "I'm sorry I got angry", "Let's start again", "I love every part of you",
+  "I'm sorry, you didn't deserve that", "You are my sunshine", "I'm sorry I wasn't there",
+  "I'll make it up to you", "Your happiness matters to me", "I love you, always",
+  "I'm sorry I was late", "You are my dream", "I regret hurting you",
+  "I'm sorry, I care deeply", "You are my reason to smile", "Forgive me, I was foolish",
+  "I love you beyond measure", "I'm sorry I didn't say it sooner", "You are my heart",
+  "I'm sorry for everything", "Let's grow together", "I love you endlessly",
+  "I'm sorry, I'm human", "You are my comfort", "I'll never stop loving you"
+];
+const TOTAL = 100;
+const PER_RING = 14;
+const ADD_EVERY = 650;      // ms between new phrases
+const SPIN = 0.00035;       // rotation speed
 
-  <script>
-    const PHRASES = [
-      "My sweet girl, I love you and I'm sorry", "I love you", "I'm sorry, my love", "You are my everything", "I'm sorry I hurt you",
-      "I never want to lose you", "Forgive me, I love you", "You mean the world to me",
-      "I'm sorry I made you cry", "Every day I choose you", "I was wrong, and I love you",
-      "I'm sorry I didn't listen", "You are my home", "I miss you every moment",
-      "I'm sorry for my bad words", "My heart is always yours", "Let me make it right",
-      "I'm sorry I was selfish", "You are my favorite person", "I can't imagine life without you",
-      "I'm sorry, I'm learning", "You make me better", "I'll do better for us",
-      "I love the way you smile", "I'm sorry I was distant", "Thank you for loving me",
-      "You are my peace", "I'm sorry I let you down", "I'll always choose you",
-      "I'm sorry for the pain I caused", "You are my best friend", "I love you more than words",
-      "I'm sorry I forgot something important", "Please forgive me, my love", "You are my forever",
-      "I'm sorry I got angry", "Let's start again", "I love every part of you",
-      "I'm sorry, you didn't deserve that", "You are my sunshine", "I'm sorry I wasn't there",
-      "I'll make it up to you", "Your happiness matters to me", "I love you, always",
-      "I'm sorry I was late", "You are my dream", "I regret hurting you",
-      "I'm sorry, I care deeply", "You are my reason to smile", "Forgive me, I was foolish",
-      "I love you beyond measure", "I'm sorry I didn't say it sooner", "You are my heart",
-      "I'm sorry for everything", "Let's grow together", "I love you endlessly",
-      "I'm sorry, I'm human", "You are my comfort", "I'll never stop loving you"
-    ];
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+let size = 600, dpr = 1;
 
-    const TOTAL = 100;
-    const PER_RING = 14;
-    const ADD_EVERY = 650;
-    const SPIN = 0.0003;
+function resize() {
+  size = Math.min(window.innerWidth, window.innerHeight);
+  dpr = window.devicePixelRatio || 1;
+  canvas.width = size * dpr;
+  canvas.height = size * dpr;
+}
+window.addEventListener("resize", resize);
+resize();
 
-    const canvas = document.getElementById("c");
-    const ctx = canvas.getContext("2d");
-    let size = 600, dpr = 1;
+// Background stars (fixed positions)
+const stars = Array.from({ length: 120 }, () => ({
+  x: Math.random(), y: Math.random(), r: Math.random() * 1.2 + 0.2, a: Math.random() * 0.6 + 0.2
+}));
 
-    function resize() {
-      size = Math.min(window.innerWidth, window.innerHeight);
-      dpr = window.devicePixelRatio || 1;
-      canvas.width = size * dpr;
-      canvas.height = size * dpr;
+let count = 0, playing = false, angle = 0, lastAdd = 0, last = performance.now();
+let audioCtx = null, musicTimer = null, musicStep = 0;
+
+// A soft, original romantic instrumental made with gentle synthesized notes.
+// Browsers require a user gesture before audio can start, so it begins on the first play.
+function playMusicNote(frequency, startAt, duration, volume, type = "sine") {
+  if (!audioCtx) return;
+  const oscillator = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  oscillator.type = type;
+  oscillator.frequency.value = frequency;
+  gain.gain.setValueAtTime(0.0001, startAt);
+  gain.gain.linearRampToValueAtTime(volume, startAt + 0.12);
+  gain.gain.setValueAtTime(volume, startAt + Math.max(0.13, duration - 0.25));
+  gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+  oscillator.connect(gain);
+  gain.connect(audioCtx.destination);
+  oscillator.start(startAt);
+  oscillator.stop(startAt + duration + 0.03);
+}
+
+function playMusicStep() {
+  if (!audioCtx || audioCtx.state !== "running") return;
+  const chords = [
+    [261.63, 329.63, 392.00, 493.88], // Cmaj7
+    [196.00, 246.94, 293.66, 392.00], // G
+    [220.00, 261.63, 329.63, 392.00], // Am7
+    [174.61, 220.00, 261.63, 329.63]  // Fmaj7
+  ];
+  const chord = chords[Math.floor(musicStep / 4) % chords.length];
+  const note = chord[musicStep % 4];
+  const now = audioCtx.currentTime;
+  playMusicNote(note, now, 1.45, 0.035, "sine");
+  if (musicStep % 4 === 0) {
+    playMusicNote(chord[0] / 2, now, 1.8, 0.018, "triangle");
+    playMusicNote(chord[1], now, 1.7, 0.012, "sine");
+  }
+  musicStep++;
+}
+
+async function startMusic() {
+  if (!audioCtx) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    audioCtx = new AudioContextClass();
+  }
+  if (audioCtx.state === "suspended") await audioCtx.resume();
+  if (musicTimer === null) {
+    playMusicStep();
+    musicTimer = window.setInterval(playMusicStep, 470);
+  }
+}
+
+function stopMusic() {
+  if (musicTimer !== null) {
+    window.clearInterval(musicTimer);
+    musicTimer = null;
+  }
+}
+
+function togglePlay() {
+  playing = !playing;
+  if (playing) {
+    window._t0 = performance.now();
+    startMusic();
+  } else {
+    stopMusic();
+  }
+  if (playing && count >= TOTAL) count = 0;
+}
+
+canvas.addEventListener("click", (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left - rect.width / 2;
+  const y = e.clientY - rect.top - rect.height / 2;
+  if (Math.hypot(x, y) < size * 0.12) togglePlay();
+});
+
+function draw(now) {
+  const dt = now - last; last = now;
+  if (playing) {
+    angle += dt * SPIN;
+    if (now - lastAdd > ADD_EVERY && count < TOTAL) { count++; lastAdd = now; }
+    if (count >= TOTAL) {
+      playing = false;
+      stopMusic();
     }
-    window.addEventListener("resize", resize);
-    resize();
+  }
 
-    const stars = Array.from({ length: 120 }, () => ({
-      x: Math.random(), y: Math.random(), r: Math.random() * 1.4 + 0.2, a: Math.random() * 0.6 + 0.2
-    }));
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, size, size);
 
-    let count = 0, playing = false, angle = 0, lastAdd = 0, last = performance.now();
+  // Stars
+  for (const s of stars) {
+    ctx.globalAlpha = s.a;
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.arc(s.x * size, s.y * size, s.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
 
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    let musicStarted = false;
-    let musicTimer = null;
+  const cx = size / 2, cy = size / 2;
+  const unit = size / 600;
 
-    function playNote(frequency, duration, type = "sine", volume = 0.05) {
-      if (!audioCtx) return;
-      const oscillator = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
-      oscillator.type = type;
-      oscillator.frequency.value = frequency;
-      gainNode.gain.setValueAtTime(0.0001, audioCtx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(volume, audioCtx.currentTime + 0.02);
-      gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-      oscillator.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
-      oscillator.start();
-      oscillator.stop(audioCtx.currentTime + duration + 0.03);
-    }
+  ctx.save();
+  ctx.translate(cx, cy);
 
-    function startMusic() {
-      if (musicStarted) return;
-      musicStarted = true;
-      if (audioCtx.state === "suspended") audioCtx.resume();
+  // Faint orbit rings
+  ctx.strokeStyle = "rgba(180,160,220,0.12)";
+  ctx.lineWidth = 1;
+  for (const r of [120, 200, 280]) {
+    ctx.beginPath(); ctx.arc(0, 0, r * unit, 0, Math.PI * 2); ctx.stroke();
+  }
 
-      const notes = [220, 277.18, 329.63, 392.0, 349.23, 293.66, 261.63, 329.63];
-      let step = 0;
-      musicTimer = setInterval(() => {
-        const base = notes[step % notes.length];
-        playNote(base, 0.8, "sine", 0.05);
-        playNote(base * 2, 0.65, "triangle", 0.03);
-        step++;
-      }, 620);
-    }
+  // Phrases spiralling outward, rotating together
+  ctx.save();
+  ctx.rotate(angle);
+  for (let i = 0; i < count; i++) {
+    const text = PHRASES[i % PHRASES.length];
+    const ring = Math.floor(i / PER_RING);
+    const slot = i % PER_RING;
+    const a = (slot / PER_RING) * Math.PI * 2 + ring * 0.19;
+    const r = (80 + ring * 22) * unit;
+    const hue = 260 - (i / TOTAL) * 120; // purple -> orange
+    ctx.save();
+    ctx.rotate(a);
+    ctx.translate(r, 0);
+    ctx.fillStyle = `hsl(${hue}, 70%, ${i === count - 1 ? 85 : 68}%)`;
+    ctx.font = `${Math.round(10 * unit)}px system-ui, sans-serif`;
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, 0, 0);
+    ctx.restore();
+  }
+  ctx.restore();
 
-    function togglePlay() {
-      playing = !playing;
-      if (playing) {
-        window._t0 = performance.now();
-        startMusic();
-      }
-      if (playing && count >= TOTAL) count = 0;
-    }
+  // Gold progress arc
+  ctx.strokeStyle = "#e8b04a";
+  ctx.lineWidth = 2.5 * unit;
+  ctx.beginPath();
+  ctx.arc(0, 0, 290 * unit, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * count) / TOTAL);
+  ctx.stroke();
 
-    canvas.addEventListener("click", (e) => {
-      startMusic();
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left - rect.width / 2;
-      const y = e.clientY - rect.top - rect.height / 2;
-      if (Math.hypot(x, y) < size * 0.12) togglePlay();
-    });
+  // Original center disc
+  ctx.fillStyle = "#07060f";
+  ctx.beginPath(); ctx.arc(0, 0, 62 * unit, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = "rgba(180,160,220,0.25)";
+  ctx.beginPath(); ctx.arc(0, 0, 62 * unit, 0, Math.PI * 2); ctx.stroke();
+  ctx.restore();
 
-    window.addEventListener("keydown", (e) => {
-      if (e.code === "Space") {
-        e.preventDefault();
-        startMusic();
-        togglePlay();
-      }
-    });
+  // Original pink pulsing heartbeat glow
+  const pulse = (Math.sin(now / 350) + 1) / 2;
+  ctx.save();
+  ctx.translate(cx, cy);
+  const glow = ctx.createRadialGradient(0, 0, 20 * unit, 0, 0, (70 + pulse * 14) * unit);
+  glow.addColorStop(0, `rgba(255,110,160,${0.25 + 0.25 * pulse})`);
+  glow.addColorStop(1, "rgba(255,110,160,0)");
+  ctx.fillStyle = glow;
+  ctx.beginPath(); ctx.arc(0, 0, (70 + pulse * 14) * unit, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = `rgba(255,140,180,${0.3 + 0.4 * pulse})`;
+  ctx.lineWidth = 1.5 * unit;
+  ctx.beginPath(); ctx.arc(0, 0, (62 + pulse * 4) * unit, 0, Math.PI * 2); ctx.stroke();
 
-    function draw(now) {
-      const dt = now - last; last = now;
-      if (playing) {
-        angle += dt * SPIN;
-        if (now - lastAdd > ADD_EVERY && count < TOTAL) {
-          count++;
-          lastAdd = now;
-        }
-        if (count >= TOTAL) playing = false;
-      }
-
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, size, size);
-
-      for (const star of stars) {
-        ctx.globalAlpha = star.a;
-        ctx.fillStyle = "#fff";
-        ctx.beginPath();
-        ctx.arc(star.x * size, star.y * size, star.r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.globalAlpha = 1;
-
-      const cx = size / 2;
-      const cy = size / 2;
-      const unit = size / 600;
-
-      ctx.save();
-      ctx.translate(cx, cy);
-
-      const halo = ctx.createRadialGradient(0, 0, 0, 0, 0, 340 * unit);
-      halo.addColorStop(0, "rgba(255,130,190,0.16)");
-      halo.addColorStop(0.5, "rgba(100,75,160,0.12)");
-      halo.addColorStop(1, "rgba(0,0,0,0)");
-      ctx.fillStyle = halo;
-      ctx.fillRect(-340 * unit, -340 * unit, 680 * unit, 680 * unit);
-
-      ctx.strokeStyle = "rgba(214,188,255,0.15)";
-      ctx.lineWidth = 1;
-      for (const r of [110, 180, 250, 320]) {
-        ctx.beginPath();
-        ctx.arc(0, 0, r * unit, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-
-      ctx.save();
-      ctx.rotate(angle);
-      for (let i = 0; i < count; i++) {
-        const text = PHRASES[i % PHRASES.length];
-        const ring = Math.floor(i / PER_RING);
-        const slot = i % PER_RING;
-        const a = (slot / PER_RING) * Math.PI * 2 + ring * 0.2;
-        const r = (80 + ring * 23) * unit;
-        const hue = 268 - (i / TOTAL) * 120;
-        ctx.save();
-        ctx.rotate(a);
-        ctx.translate(r, 0);
-        ctx.fillStyle = `hsla(${hue}, 80%, ${i === count - 1 ? 84 : 72}%, 0.96)`;
-        ctx.font = `600 ${Math.round(10.5 * unit)}px "Cormorant Garamond", serif`;
-        ctx.textBaseline = "middle";
-        ctx.fillText(text, 0, 0);
-        ctx.restore();
-      }
-      ctx.restore();
-
-      ctx.strokeStyle = "#f5d37f";
-      ctx.lineWidth = 2.5 * unit;
+  // Original pencil-scratch heart and M, I, M letter sequence
+  {
+    const el = window._t0 === undefined ? -1 : now - window._t0;
+    const letter = el < 0 ? null : el < 4000 ? "M" : el < 8000 ? "I" : "M";
+    const letterStart = el < 4000 ? 0 : el < 8000 ? 4000 : 8000;
+    const fade = el < 0 ? 0 : Math.min(1, (el - letterStart) / 500);
+    const prog = Math.min(1, (el % 6000) / 3000);
+    const steps = Math.max(2, Math.floor(120 * prog));
+    const heartScale = 3.1 * unit;
+    ctx.lineCap = "round";
+    for (let pass = 0; pass < 2; pass++) {
+      ctx.strokeStyle = pass === 0 ? "rgba(225,225,240,0.6)" : "rgba(150,150,170,0.35)";
+      ctx.lineWidth = (pass === 0 ? 1.2 : 0.8) * unit;
       ctx.beginPath();
-      ctx.arc(0, 0, 290 * unit, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * count) / TOTAL);
+      for (let k = 0; k <= steps; k++) {
+        const t = (k / 120) * Math.PI * 2;
+        const jx = (Math.random() - 0.5) * 2 * unit;
+        const jy = (Math.random() - 0.5) * 2 * unit;
+        const x = 16 * Math.pow(Math.sin(t), 3) * heartScale + jx;
+        const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) * heartScale + jy;
+        if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
       ctx.stroke();
-
-      ctx.fillStyle = "#0f0718";
-      ctx.beginPath();
-      ctx.arc(0, 0, 64 * unit, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.strokeStyle = "rgba(255,255,255,0.2)";
-      ctx.beginPath();
-      ctx.arc(0, 0, 64 * unit, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
-
-      const pulse = (Math.sin(now / 350) + 1) / 2;
-      ctx.save();
-      ctx.translate(cx, cy);
-      const glow = ctx.createRadialGradient(0, 0, 10 * unit, 0, 0, (70 + pulse * 18) * unit);
-      glow.addColorStop(0, `rgba(255, 165, 215, ${0.38 + pulse * 0.35})`);
-      glow.addColorStop(0.6, "rgba(255, 120, 180, 0.15)");
-      glow.addColorStop(1, "rgba(255,120,180,0)");
-      ctx.fillStyle = glow;
-      ctx.beginPath();
-      ctx.arc(0, 0, (70 + pulse * 18) * unit, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.strokeStyle = `rgba(255, 214, 120, ${0.4 + pulse * 0.45})`;
-      ctx.lineWidth = 1.5 * unit;
-      ctx.beginPath();
-      ctx.arc(0, 0, (62 + pulse * 4) * unit, 0, Math.PI * 2);
-      ctx.stroke();
-
-      const el = window._t0 === undefined ? -1 : now - window._t0;
-      const letter = el < 0 ? null : el < 4000 ? "M" : el < 8000 ? "I" : "M";
-      const letterStart = el < 4000 ? 0 : el < 8000 ? 4000 : 8000;
-      const fade = el < 0 ? 0 : Math.min(1, (el - letterStart) / 500);
-      const prog = Math.min(1, (el % 6000) / 3000);
-      const steps = Math.max(2, Math.floor(120 * prog));
-      const heartScale = 3.1 * unit;
-      ctx.lineCap = "round";
-      for (let pass = 0; pass < 2; pass++) {
-        ctx.strokeStyle = pass === 0 ? "rgba(255,255,255,0.72)" : "rgba(210,180,255,0.35)";
-        ctx.lineWidth = (pass === 0 ? 1.3 : 0.8) * unit;
-        ctx.beginPath();
-        for (let k = 0; k <= steps; k++) {
-          const t = (k / 120) * Math.PI * 2;
-          const x = 16 * Math.pow(Math.sin(t), 3) * heartScale + (Math.random() - 0.5) * 2 * unit;
-          const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) * heartScale + (Math.random() - 0.5) * 2 * unit;
-          if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-        }
-        ctx.stroke();
-      }
-
-      ctx.font = `700 ${Math.round(24 * unit)}px "Playfair Display", serif`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      if (letter) {
-        for (let j = 0; j < 4; j++) {
-          ctx.fillStyle = `rgba(255,255,255,${0.18 + 0.22 * fade})`;
-          ctx.fillText(letter, (Math.random() - 0.5) * 4 * unit, (Math.random() - 0.5) * 4 * unit);
-        }
-      }
-
-      if (!playing) {
-        ctx.fillStyle = "rgba(255,255,255,0.9)";
-        ctx.beginPath();
-        ctx.moveTo(-8 * unit, -12 * unit);
-        ctx.lineTo(14 * unit, 0);
-        ctx.lineTo(-8 * unit, 12 * unit);
-        ctx.closePath();
-        ctx.fill();
-      }
-
-      ctx.restore();
-      requestAnimationFrame(draw);
     }
+    ctx.font = `bold ${Math.round(30 * unit)}px system-ui, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    if (letter) {
+      for (let j = 0; j < 4; j++) {
+        ctx.fillStyle = `rgba(200,200,220,${0.22 * fade})`;
+        ctx.fillText(letter, (Math.random() - 0.5) * 3 * unit, (Math.random() - 0.5) * 3 * unit);
+      }
+    }
+  }
 
-    requestAnimationFrame(draw);
-  </script>
+  // Play button in the original center when paused
+  if (!playing) {
+    ctx.fillStyle = "rgba(255,255,255,0.92)";
+    ctx.beginPath();
+    ctx.moveTo(-8 * unit, -12 * unit);
+    ctx.lineTo(14 * unit, 0);
+    ctx.lineTo(-8 * unit, 12 * unit);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+</script>
 </body>
 </html>
