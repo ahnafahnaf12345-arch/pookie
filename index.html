@@ -14,7 +14,6 @@
 <body>
 <canvas id="c" aria-label="Animated spiral of loving apology messages. Click the center to play or pause, with romantic instrumental music."></canvas>
 <script>
-// Edit these to say YOUR words. Each one is added to the spiral, one at a time.
 const PHRASES = [
   "My sweet girl, I love you and I'm sorry", "I love you", "I'm sorry, my love", "You are my everything", "I'm sorry I hurt you",
   "I never want to lose you", "Forgive me, I love you", "You mean the world to me",
@@ -38,8 +37,8 @@ const PHRASES = [
 ];
 const TOTAL = 100;
 const PER_RING = 14;
-const ADD_EVERY = 650;      // ms between new phrases
-const SPIN = 0.00035;       // rotation speed
+const ADD_EVERY = 650;
+const SPIN = 0.00035;
 
 const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
@@ -54,7 +53,6 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
-// Background stars (fixed positions)
 const stars = Array.from({ length: 120 }, () => ({
   x: Math.random(), y: Math.random(), r: Math.random() * 1.2 + 0.2, a: Math.random() * 0.6 + 0.2
 }));
@@ -62,8 +60,6 @@ const stars = Array.from({ length: 120 }, () => ({
 let count = 0, playing = false, angle = 0, lastAdd = 0, last = performance.now();
 let audioCtx = null, musicTimer = null, musicStep = 0;
 
-// A soft, original romantic instrumental made with gentle synthesized notes.
-// Browsers require a user gesture before audio can start, so it begins on the first play.
 function playMusicNote(frequency, startAt, duration, volume, type = "sine") {
   if (!audioCtx) return;
   const oscillator = audioCtx.createOscillator();
@@ -83,10 +79,10 @@ function playMusicNote(frequency, startAt, duration, volume, type = "sine") {
 function playMusicStep() {
   if (!audioCtx || audioCtx.state !== "running") return;
   const chords = [
-    [261.63, 329.63, 392.00, 493.88], // Cmaj7
-    [196.00, 246.94, 293.66, 392.00], // G
-    [220.00, 261.63, 329.63, 392.00], // Am7
-    [174.61, 220.00, 261.63, 329.63]  // Fmaj7
+    [261.63, 329.63, 392.00, 493.88],
+    [196.00, 246.94, 293.66, 392.00],
+    [220.00, 261.63, 329.63, 392.00],
+    [174.61, 220.00, 261.63, 329.63]
   ];
   const chord = chords[Math.floor(musicStep / 4) % chords.length];
   const note = chord[musicStep % 4];
@@ -151,7 +147,6 @@ function draw(now) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, size, size);
 
-  // Stars
   for (const s of stars) {
     ctx.globalAlpha = s.a;
     ctx.fillStyle = "#fff";
@@ -166,15 +161,12 @@ function draw(now) {
 
   ctx.save();
   ctx.translate(cx, cy);
-
-  // Faint orbit rings
   ctx.strokeStyle = "rgba(180,160,220,0.12)";
   ctx.lineWidth = 1;
   for (const r of [120, 200, 280]) {
     ctx.beginPath(); ctx.arc(0, 0, r * unit, 0, Math.PI * 2); ctx.stroke();
   }
 
-  // Phrases spiralling outward, rotating together
   ctx.save();
   ctx.rotate(angle);
   for (let i = 0; i < count; i++) {
@@ -183,7 +175,7 @@ function draw(now) {
     const slot = i % PER_RING;
     const a = (slot / PER_RING) * Math.PI * 2 + ring * 0.19;
     const r = (80 + ring * 22) * unit;
-    const hue = 260 - (i / TOTAL) * 120; // purple -> orange
+    const hue = 260 - (i / TOTAL) * 120;
     ctx.save();
     ctx.rotate(a);
     ctx.translate(r, 0);
@@ -195,21 +187,18 @@ function draw(now) {
   }
   ctx.restore();
 
-  // Gold progress arc
   ctx.strokeStyle = "#e8b04a";
   ctx.lineWidth = 2.5 * unit;
   ctx.beginPath();
   ctx.arc(0, 0, 290 * unit, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * count) / TOTAL);
   ctx.stroke();
 
-  // Original center disc
   ctx.fillStyle = "#07060f";
   ctx.beginPath(); ctx.arc(0, 0, 62 * unit, 0, Math.PI * 2); ctx.fill();
   ctx.strokeStyle = "rgba(180,160,220,0.25)";
   ctx.beginPath(); ctx.arc(0, 0, 62 * unit, 0, Math.PI * 2); ctx.stroke();
   ctx.restore();
 
-  // Original pink pulsing heartbeat glow
   const pulse = (Math.sin(now / 350) + 1) / 2;
   ctx.save();
   ctx.translate(cx, cy);
@@ -222,13 +211,15 @@ function draw(now) {
   ctx.lineWidth = 1.5 * unit;
   ctx.beginPath(); ctx.arc(0, 0, (62 + pulse * 4) * unit, 0, Math.PI * 2); ctx.stroke();
 
-  // Original pencil-scratch heart and M, I, M letter sequence
+  // Show M, I, and M for equal 4-second intervals, repeating in sequence.
   {
     const el = window._t0 === undefined ? -1 : now - window._t0;
-    const letter = el < 0 ? null : el < 4000 ? "M" : el < 8000 ? "I" : "M";
-    const letterStart = el < 4000 ? 0 : el < 8000 ? 4000 : 8000;
-    const fade = el < 0 ? 0 : Math.min(1, (el - letterStart) / 500);
-    const prog = Math.min(1, (el % 6000) / 3000);
+    const letters = ["M", "I", "M"];
+    const letterIndex = el < 0 ? -1 : Math.floor(el / 4000) % letters.length;
+    const letter = letterIndex < 0 ? null : letters[letterIndex];
+    const letterStart = letterIndex < 0 ? 0 : letterIndex * 4000;
+    const fade = letterIndex < 0 ? 0 : Math.min(1, (el - letterStart) / 500);
+    const prog = el < 0 ? 0 : Math.min(1, ((el % 6000) / 3000));
     const steps = Math.max(2, Math.floor(120 * prog));
     const heartScale = 3.1 * unit;
     ctx.lineCap = "round";
@@ -257,7 +248,6 @@ function draw(now) {
     }
   }
 
-  // Play button in the original center when paused
   if (!playing) {
     ctx.fillStyle = "rgba(255,255,255,0.92)";
     ctx.beginPath();
@@ -268,7 +258,6 @@ function draw(now) {
     ctx.fill();
   }
   ctx.restore();
-
   requestAnimationFrame(draw);
 }
 requestAnimationFrame(draw);
